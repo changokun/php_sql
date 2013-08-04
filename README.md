@@ -1,4 +1,4 @@
 php_sql
-=======
+==========
 
-public version of private repo
+classes for accessing multiple sql syntaxes. coupled to m. and it is all in php.

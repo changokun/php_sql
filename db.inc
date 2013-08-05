@@ -19,12 +19,17 @@ final class db {
 	* returns true on success, false otherwise. don't run it twice, ha ha. actually, don't run it. let the class do that.
 	* this doesn't actually make any db connections. it loads config data.
 	*/
-	protected static function init() {
+	public static function init($options = array()) {
 		if(self::$initted) throw new Exception('double init on sql. oh dear.');
 
-		if(false === self::$config = parse_ini_file('sql_config.ini', true)) throw new Exception('no sql config file found, or it is unparsable. there is a sample one waiting for you.');
+		if(file_exists(__DIR__ . '/sql_config.ini')) {
+			if (false === self::$config = parse_ini_file('sql_config.ini', true)) throw new Exception('sql_config.ini is unparsable. there is a sample one waiting for you.');
+		}
+
+		foreach($options as $key => $value) self::$config[$key] = $value;
 
 		if(m::help('config')) m::dump(self::$config, __CLASS__ . ' loading config data');
+		if(empty(self::$config['data_sources_DEVELOPMENT']) and empty(self::$config['data_sources_PRODUCTION'])) throw new Exception('no data sources configured.');
 
 		if(defined('SITE_IS_DEV') and SITE_IS_DEV) {
 			$temp = self::$config['data_sources_DEVELOPMENT'];
@@ -32,11 +37,16 @@ final class db {
 			$temp = self::$config['data_sources_PRODUCTION'];
 		}
 
+
 		// create actual data_source objects
 		foreach($temp as $data) {
-			// $data['putative_schema'] is optional, if you know your db is not needing it
-			$data['putative_schema'] = empty($data['putative_schema']) ? NULL : $data['putative_schema'];
-			self::$data_sources[$data['name']] = new data_source($data['name'], $data['putative_schema'], $data['type'], $data['host'], $data['username'], $data['pass'], $data['port']);
+			if(is_object($data) and $data instanceof data_source) {
+				self::$data_sources[$data->name] = $data;
+			} else {
+				// $data['putative_schema'] is optional, if you know your db is not needing it
+				$data['putative_schema'] = empty($data['putative_schema']) ? NULL : $data['putative_schema'];
+				self::$data_sources[$data['name']] = new data_source($data['name'], $data['putative_schema'], $data['type'], $data['host'], $data['username'], $data['pass'], $data['port']);
+			}
 		}
 		unset(self::$config['data_sources_DEVELOPMENT'], self::$config['data_sources_PRODUCTION']);
 

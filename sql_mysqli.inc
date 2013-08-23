@@ -159,6 +159,7 @@ class sql_mysqli extends sql {
 		// the parent function just set executed action, go by that
 		switch($query->executed_action) {
 			case 'select':
+			case 'show':
 				$data = array();
 				while($row = $query->raw_result->fetch_assoc()) $data[] = $row;
 
@@ -172,6 +173,7 @@ class sql_mysqli extends sql {
 
 			case 'insert':
 			case 'replace':
+			case 'create':
 				if($query->insert_id) {
 					$query->result = $query->insert_id;
 				} else {

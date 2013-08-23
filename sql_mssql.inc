@@ -98,6 +98,7 @@ mssql_free_statement($stmt);
 		// the parent function just set executed action, go by that
 		switch($query->executed_action) {
 			case 'select':
+			case 'show':
 				$data = array();
 				while($row = mssql_fetch_assoc($query->raw_result)) {
 					$data[] = $row;

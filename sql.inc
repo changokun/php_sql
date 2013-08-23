@@ -178,7 +178,7 @@ abstract class sql { // must be extended by sql_mssql or sql_mysqli for example.
 		$query->error_messages[] = implode(' X ' , $query->error_messages);
 		$temp = implode(' | ', $query->error_messages);
 		if(m::help('sql')) m::dump($query->error_messages, 'ERRORS on this ' . get_class($this) . ' query: ' . $query->query);
-		trigger_error($temp, E_USER_WARNING); // upgrade to ERROR and kill sendmail when possible.
+		if( ! $query->silent) trigger_error($temp, E_USER_WARNING); // upgrade to ERROR and kill sendmail when possible.
 	}
 
 	/**
@@ -198,7 +198,7 @@ abstract class sql { // must be extended by sql_mssql or sql_mysqli for example.
 		// we could judge by the ->action, but that could be misleading, and isn't always conclusive
 		// to judge the true action, we'll look at the first six letters. which means we should strip any comments and whitespace
 		$query->executed_action = $query->action; // hold on.....
-		if(! in_array($query->executed_action, array('select', 'update', 'insert', 'replace', 'delete'))) $query->executed_action = substr(trim(preg_replace("/\/\*.*?\*\//", '', $query->query)), 0, 6); // feel free to extend the array....
+		if(! in_array($query->executed_action, array('select', 'update', 'insert', 'replace', 'delete', 'show', 'create'))) $query->executed_action = substr(trim(preg_replace("/\/\*.*?\*\//", '', $query->query)), 0, 6); // feel free to extend the array....
 		$query->result = false; // if this is not set by the extending class, the code running the query should percieve an error.
 	}
 

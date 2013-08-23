@@ -33,20 +33,21 @@ class query {
 	public $num_rows; // having no default value prevents passed in options from setting it.
 	public $data = array(); // for inserts and updates
 	public $data_table_name = ''; // for inserts and updates
+	public $silent = false; // will not throw errors if silent?
 
 	function __construct($options = array()) {
 
 		// bring options into properties - by using isset, you can only change vars declared above that are initialized to something.
 		foreach($options as $key => $value) if(isset($this->$key)) $this->$key = $value;
 
-		// make sure we gots db
+		// make sure we have a db chosen
 		if(empty($this->data_source_name)) throw new Exception('no data_source');
 
 		// stored procedure assurances
 		if( ! empty($this->stored_procedure_name)) $this->action = 'stored_procedure';
 
 		// while we are still developing this - some things are limited - if you are writing your own query, you can do anything you want.
-		if( ! in_array($this->action, array('select', 'insert', 'update', 'replace', 'delete', 'pre-written', 'stored_procedure'))) throw new Exception($this->action . ' is an unsupported query type for this class.');
+		if( ! in_array($this->action, array('select', 'insert', 'update', 'replace', 'delete', 'show', 'create', 'stored_procedure'))) throw new Exception($this->action . ' is an unsupported query type for this class.');
 
 		// allow some clauses to be passed by constructor args:
 		// todo finish out all teh clause names

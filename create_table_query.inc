@@ -6,7 +6,7 @@
  * Time: 9:53 AM
  * To change this template use File | Settings | File Templates.
  */
-
+meh let's not do this'
 class create_table_query extends query {
     function __construct($data_source_name, $data_table_name, $data = array(), $where_clause, $options = array()) {
         //blah

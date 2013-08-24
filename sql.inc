@@ -13,7 +13,7 @@ abstract class sql { // must be extended by sql_mssql or sql_mysqli for example.
 	protected $data_source;
 	public $data_source_name;
 	const STRING_DELIMITER = "'"; // single quotes should be pretty universal.
-    public $error_type;
+
 
 	function __construct(data_source $data_source) {
 		if(m::help('sql', 4)) m::dump('constructing a ' . $data_source->type . ' handler for ' . $data_source->name);

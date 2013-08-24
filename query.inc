@@ -34,6 +34,7 @@ class query {
 	public $data = array(); // for inserts and updates
 	public $data_table_name = ''; // for inserts and updates
 	public $silent = false; // will not throw errors if silent?
+	public $error_type;
 
 	function __construct($options = array()) {
 

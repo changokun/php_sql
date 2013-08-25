@@ -88,6 +88,17 @@ class query {
 			case 'single associative array':
 				$this->result = $data[0];
 			break;
+			case 'single boolean':
+				$value = array_shift($data[0]);
+				$handler = db::get_handler_by_name($this->data_source_name);
+				if($value === $handler::BOOLEAN_RESULT_TRUE) $this->result = true;
+				elseif($value === $handler::BOOLEAN_RESULT_FALSE) $this->result = false;
+				else $this->result = null; // null will have to do the job that false used to. don't forget there is also the success property
+				break;
+			case 'single boolean regardless': // stricter... and not null
+				$handler = db::get_handler_by_name($this->data_source_name);
+				$this->result = array_shift($data[0]) === $handler::BOOLEAN_RESULT_TRUE;
+				break;
 			case 'single string':
 			case 'single string regardless':
 				$this->result = array_shift($data[0]);

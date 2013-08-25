@@ -199,7 +199,7 @@ abstract class sql { // must be extended by sql_mssql or sql_mysqli for example.
 		// to judge the true action, we'll look at the first six letters. which means we should strip any comments and whitespace
 		$query->executed_action = $query->action; // hold on.....
 		if(! in_array($query->executed_action, array('select', 'update', 'insert', 'replace', 'delete', 'show', 'create'))) $query->executed_action = substr(trim(preg_replace("/\/\*.*?\*\//", '', $query->query)), 0, 6); // feel free to extend the array....
-		$query->result = false; // if this is not set by the extending class, the code running the query should percieve an error.
+		$query->result = false; // if this is not set by the extending class, the code running the query should perceive an error.
 	}
 
 	function replace_tokens($string = '', $values = array()) {
@@ -239,6 +239,9 @@ abstract class sql { // must be extended by sql_mssql or sql_mysqli for example.
 		return false;
 	}
 
+	function check_for_schema($schema_name) {
+		throw new Exception(get_called_class() . ' does not have a ' . __FUNCTION__ . ' method yet (checking for ' . $schema_name . '.');
+	}
 
 }
 

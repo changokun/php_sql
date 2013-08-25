@@ -1,21 +1,27 @@
 <?php
 
-class sql_mysqli extends sql {
+class sql_pg extends sql {
+
+	const BOOLEAN_RESULT_TRUE = 't';
+	const BOOLEAN_RESULT_FALSE = 'f';
 
 	protected function _get_connection() { // called by get_connection. don't break that flow.
-		if($this->data_source->name == 'test_dummy') {
-			// for internal debugging and dev, eg write query for debug()
-			self::$connections[$this->data_source->name] = new mysqli(); // todo - this will use defaults set in php.ini, which may be okay, but prob not.
-			return;
+		//dbname=dbokjs60endpl3
+		$connection_parts = array(
+			"host={$this->data_source->host}",
+			"port={$this->data_source->port}",
+			"user={$this->data_source->username}",
+			'password=' . $this->data_source->get_password(),
+			"options='--client_encoding=UTF8'"
+		);
+		if( ! empty($this->data_source->sslmode)) $connection_parts[] = "sslmode={$this->data_source->sslmode}";
+		if ( !self::$connections[$this->data_source->name] = pg_connect(implode(' ', $connection_parts))) {
+			throw new Exception('pgsql db connection to ' . $this->data_source->name . ' data source failed: ' . pg_last_error());
 		}
-		self::$connections[$this->data_source->name] = new mysqli($this->data_source->host, $this->data_source->username, $this->data_source->get_password(), NULL, $this->data_source->port);
-		if (mysqli_connect_error()) {
-			throw new Exception('mysqli db connection to ' . $this->data_source->name . ' datasource failed: (' . mysqli_connect_errno() . ') ' . mysqli_connect_error());
-		}
-		self::$connections[$this->data_source->name]->set_charset('utf8');
 	}
 
 	function write_query(query $query) {
+		throw new Exception('not yet developed - ' . __FUNCTION__);
 		parent::write_query($query); // logging and type checking, sets ->query to empty string.
 
 		// only one type of action is allowed. select, insert, update, delete, etc.
@@ -111,24 +117,16 @@ class sql_mysqli extends sql {
 		$connection = self::get_connection();
 
 		/////////// this line runs your query.
-		if($result = $connection->query($query->query)) {
+		if($result = pg_query($connection, $query->query)) {
 			$query->raw_result = $result;
 			$query->success = true;
 			$query->executed = true;
-			$query->insert_id = $connection->insert_id;
-			$query->num_rows = is_bool($result) ? NULL : (float) $result->num_rows; // num rows throws notices on inserts and updates.
+
+			// retval whaaaaa? $query->insert_id = $connection->insert_id;
+			$query->num_rows = pg_num_rows($result); // todo check for inserts/updates
 			return $result;
 		} else {
-			if(m::help('sql')) m::dump($connection->error_list, 'ERRORS on this query: ' . $query->query); // normally this is done solely in the _trigger_error, but there's all this extra info....
-			$query->error_messages[] = $connection->error;
-            // are we able to know the nature of the error? i think if we can classify it to a few things,
-            // we can better allow our consumers to make decisions
-            // our error types: connection, table_existence, unknown field.
-            // for mysql, le'ts look for some key terms in the error message.
-            if(stripos($connection->error, 'doesn\'t exist') !== false) {
-                // no table.
-                $query->error_type = 'table_existence'; // const? make it not readable. enum? todo
-            }
+			$query->error_messages[] = pg_last_error();
 			$this->_trigger_error($query);
 			return false;
 		}
@@ -143,6 +141,7 @@ class sql_mysqli extends sql {
 	* @param string $str
 	*/
 	public function groom_string_data($str) { // todo - if this needs to be publicly avail, need to check for data source, etc
+		throw new Exception('not yet developed - ' . __FUNCTION__);
 		$str = parent::groom_string_data($str); // handles non-mysql grooming, such as entities and quotes.
 		$connection = self::get_connection(); // todo make sure i have a string, and a connection.
 		return $connection->real_escape_string($str);
@@ -159,9 +158,8 @@ class sql_mysqli extends sql {
 		// the parent function just set executed action, go by that
 		switch($query->executed_action) {
 			case 'select':
-			case 'show':
 				$data = array();
-				while($row = $query->raw_result->fetch_assoc()) $data[] = $row;
+				while($row = pg_fetch_assoc($query->raw_result)) $data[] = $row;
 
 				if(count($data) === 0) {
 					$query->set_empty_result(); // this does things like NULL vs empty array. it is nicer than the same thing all teh time.
@@ -171,9 +169,9 @@ class sql_mysqli extends sql {
 
 			break;
 
-			case 'insert':
-			case 'replace':
-			case 'create':
+			case 'XXXinsert':
+			case 'XXXreplace':
+			case 'XXXcreate':
 				if($query->insert_id) {
 					$query->result = $query->insert_id;
 				} else {
@@ -181,8 +179,8 @@ class sql_mysqli extends sql {
 				}
 			break;
 
-			case 'update':
-			case 'delete':
+			case 'XXXupdate':
+			case 'XXXdelete':
 				$connection = $this->get_connection();
 				if($query->raw_result === true) {
 					$info = $connection->info; // ex Rows matched: 1 Changed: 0 Warnings: 0
@@ -202,11 +200,14 @@ class sql_mysqli extends sql {
 		}
 	}
 
-	function check_for_schema($schema_name)	{
-		$query = new query(array('data_source_name' => $this->data_source_name, 'action' => 'select', 'query' => "SHOW DATABASES LIKE '{$schema_name}'"));
-		db::q($query);
-		return (bool) $query->num_rows;
+
+
+	function check_for_schema($schema_name) {
+		$query = new query(array('data_source_name' => $this->data_source_name, 'action' => 'select', 'query' => "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = '{$schema_name}')", 'return_format' => 'single boolean'));
+		return db::q($query);
 	}
+
+
 
 }
 

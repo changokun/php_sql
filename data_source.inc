@@ -7,7 +7,7 @@ class data_source {
 	public $username;
 	public $port;
 	private $pass;
-	public function __construct($name, $putative_schema, $type, $host, $username, $pass, $port = NULL) {
+	public function __construct($name, $putative_schema, $type, $host, $username, $pass, $port = NULL, $options = array()) {
 		$this->name = $name;
 		$this->putative_schema = $putative_schema;
 		$this->type = $type;
@@ -15,6 +15,7 @@ class data_source {
 		$this->username = $username;
 		$this->pass = $pass;
 		if( ! empty($port) and is_numeric($port)) $this->port = (int) $port;
+		if( ! empty($options)) foreach($options as $key => $value) $this->key = $value; // eg pgsql's sslmode or maybe some charsets
 	}
 
 	public function get_password() {

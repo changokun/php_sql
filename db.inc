@@ -48,6 +48,9 @@ final class db {
 				}
 			}
 
+		} elseif(stripos($data_source->type, 'pg') !== false or stripos($data_source->type, 'post') !== false) {
+			self::$handlers[$data_source->name] = new sql_pg($data_source);
+
 		} else { // defaulting to mysqli - mysql is depped.
 			if(extension_loaded('mysqli')) {
 				self::$handlers[$data_source->name] = new sql_mysqli($data_source);
@@ -64,6 +67,11 @@ final class db {
 		return self::$data_sources;
 	}
 
+	public static function get_data_source($data_source_name) {
+		if(isset(self::$data_sources[$data_source_name])) return self::$data_sources[$data_source_name];
+		return false;
+	}
+
 	/**
 	* returns data formatted to your specifications, or false on error.
 	* this and simple_lookup are really the only public-facing functions.
@@ -75,7 +83,7 @@ final class db {
 		// get the handler, which handles a particular syntax.
 		$handler = self::get_handler_by_name($query->data_source_name); // this will eventually make a db connection
 
-		// easy peasy
+		// easy-peasy
 		if($result = $handler->run($query)) {
 			// success - convert result to final format - set $query->result
 			$handler->groom_result($query);
@@ -143,6 +151,11 @@ final class db {
 		static::$data_sources[$data_source->name] = $data_source;
 	}
 
+	public static function check_for_schema($data_source_name, $schema_name) {
+		if( ! $data_source = self::get_data_source($data_source_name)) return false;
+		if( ! $handler = self::get_handler($data_source)) return false;
+		return $handler->check_for_schema($schema_name);
+	}
 }
 
 

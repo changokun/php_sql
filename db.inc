@@ -11,6 +11,64 @@ final class db {
 	private static $handlers = array(); // handlers handle syntax types - mysql vs mssql. each handler has it's own set of connections
 
 	private function __construct() {}
+    
+    /*public static function init($options = array()) {
+        if( ! empty(self::$data_sources)) return;
+
+        if(file_exists(__DIR__ . '/sql_config.ini')) {
+            if (false === self::$config = parse_ini_file('sql_config.ini', true)) throw new Exception('sql_config.ini is unparsable. there is a sample one waiting for you.');
+        }
+
+        foreach($options as $key => $value) self::$config[$key] = $value;
+
+        if(m::help('config')) m::dump(self::$config, __CLASS__ . ' loading config data');
+
+        if(empty(self::$config['data_sources_DEVELOPMENT']) and empty(self::$config['data_sources_PRODUCTION'])) throw new Exception('no data sources configured.');
+
+        if(SITE_IS_DEV) {
+            $temp = self::$config['data_sources_DEVELOPMENT'];
+        } else {
+            $temp = self::$config['data_sources_PRODUCTION'];
+        }
+
+
+        // create actual data_source objects
+        foreach($temp as $data) {
+            if(is_object($data) and $data instanceof data_source) {
+                self::$data_sources[$data->name] = $data;
+            } else {
+                // $data['putative_schema'] is optional, if you know your db is not needing it
+                $data['putative_schema'] = empty($data['putative_schema']) ? NULL : $data['putative_schema'];
+                self::$data_sources[$data['name']] = new data_source($data['name'], $data['putative_schema'], $data['type'], $data['host'], $data['username'], $data['pass'], $data['port']);
+            }
+        }
+        unset(self::$config['data_sources_DEVELOPMENT'], self::$config['data_sources_PRODUCTION']);
+
+        // aliases
+        if(isset(self::$config['data_source_aliases'])) {
+            foreach(self::$config['data_source_aliases'] as $alias => $target) {
+                if( ! isset(self::$data_sources[$target])) throw new Exception('i do not like your alias configuration.');
+                if(isset(self::$data_sources[$alias])) throw new Exception('i do not like your alias configuration at all.');
+                self::$data_sources[$alias] = self::$data_sources[$target];
+            }
+        }
+
+        return true;
+    }*/
+
+
+    public static function init() {
+        if(func_num_args()) foreach(func_get_args() as $arg) {
+            // if it is an array, recurse
+            if(is_array($arg)) {
+                foreach($arg as $sub_arg) self::init($sub_arg);
+            } elseif(is_object($arg) and $arg instanceof data_source) {
+                static::add_data_source($arg);
+            } else {
+                throw new Exception('what should I do with your init args?');
+            }
+        }
+    }
 
 	public static function get_handler_by_name($data_source_name) {
 		if(isset(self::$data_sources[$data_source_name])) return self::get_handler(self::$data_sources[$data_source_name]);
@@ -23,7 +81,7 @@ final class db {
 	* internal use only. it gets you the object that will handle a particular syntax, such as mysql or tsql.
 	*
 	* @param stdClass $data_source - straight from config, please.
-	* @return sql_*
+	* @return sql_*foreach($arg as $sub_arg) self::init($sub_arg);
 	*/
 	public static function get_handler(data_source $data_source) {
 		if(isset(self::$handlers[$data_source->name])) return self::$handlers[$data_source->name];

@@ -90,20 +90,12 @@ final class db {
 		if(stripos($data_source->type, 'mssql') !== false) {
 
 			// mssql t-sql type stuff
-			if(self::$config['db_force_mssql']) {
-				if( ! extension_loaded('mssql')) throw new Exception('configured to use mssql, but that is not available.');
-				self::$handlers[$data_source->name] = new sql_mssql($data_source);
-			} elseif(self::$config['db_force_sqlsrv']) {
-				if( ! extension_loaded('sqlsrv')) throw new Exception('configured to use sqlsrv, but that is not available.');
+			if(extension_loaded('sqlsrv')) {
 				self::$handlers[$data_source->name] = new sql_sqlsrv($data_source);
+			} elseif(extension_loaded('mssql')) {
+				self::$handlers[$data_source->name] = new sql_mssql($data_source);
 			} else {
-				if(extension_loaded('sqlsrv')) {
-					self::$handlers[$data_source->name] = new sql_sqlsrv($data_source);
-				} elseif(extension_loaded('mssql')) {
-					self::$handlers[$data_source->name] = new sql_mssql($data_source);
-				} else {
-					throw new Exception("cannot handle {$data_source->type}");
-				}
+				throw new Exception("cannot handle {$data_source->type}");
 			}
 
 		} elseif(stripos($data_source->type, 'pg') !== false or stripos($data_source->type, 'post') !== false) {

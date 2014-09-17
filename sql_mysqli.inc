@@ -161,7 +161,9 @@ class sql_mysqli extends sql {
 			case 'select':
 			case 'show':
 				$data = array();
-				while($row = $query->raw_result->fetch_assoc()) $data[] = $row;
+				if(is_object($query->raw_result) and get_class($query->raw_result) == 'mysqli_result' and $query->raw_result->num_rows) {
+					while($row = $query->raw_result->fetch_assoc()) $data[] = $row;
+				}
 
 				if(count($data) === 0) {
 					$query->set_empty_result(); // this does things like NULL vs empty array. it is nicer than the same thing all teh time.

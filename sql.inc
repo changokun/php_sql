@@ -116,6 +116,23 @@ abstract class sql { // must be extended by sql_mssql or sql_mysqli for example.
 								$values_loop[] = 'NULL';
 							}
 						break;
+						case 'code':
+							foreach($row[$data_type] as $field_name => $value) {
+								$field_names_loop[] = $field_name;
+								$values_loop[] = "'" . static::groom_code_data($value) . "'";
+							}
+							break;
+						case 'date':
+							foreach($row[$data_type] as $field_name => $value) {
+								$field_names_loop[] = $field_name;
+								// if you gave me a date object, i will format it properly, otherwise i assume you did something acceptable.
+								if(is_object($value) and $value instanceof DateTime) {
+									$values_loop[] = static::groom_date_data($value);
+								} else {
+									$values_loop[] = "'" . static::groom_string_data($value) . "'";
+								}
+							}
+							break;
 						case 'string':
 							$connection = self::get_connection();
 							foreach($row[$data_type] as $field_name => $value) {
@@ -133,6 +150,14 @@ abstract class sql { // must be extended by sql_mssql or sql_mysqli for example.
 								$values_loop[] = $numeric_value;
 							}
 						break;
+						case 'unmodified':
+						case 'raw':
+						case 'reference': //reference to another field.
+							foreach($row[$data_type] as $field_name => $value) {
+								$field_names_loop[] = $field_name;
+								$values_loop[] = $value;
+							}
+							break;
 						default:
 							throw new Exception('unsupported data type for insert query construction: ' . $data_type);
 						break;
@@ -192,6 +217,11 @@ abstract class sql { // must be extended by sql_mssql or sql_mysqli for example.
 		return $str;
 	}
 
+	public function groom_code_data($str) { // just like string data, except that we leave quotes alone.
+		$str = html_entity_decode($str, ENT_NOQUOTES, 'UTF-8'); // when in php 5.4, add | ENT_HTML5
+		return $str;
+	}
+	
 	public function groom_result(query $query) {
 		if( ! $query->executed or ! $query->success) return false;
 		// okay, if it was a select, that's easy. if it was an insert, grab the new id. if it was an update.... or a delete... return rows affected?
